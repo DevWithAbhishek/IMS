@@ -5,167 +5,241 @@
 
 Accepted
 
-## Date
+---
 
-2026-06-21
+# Decision
+
+The Incident Management System (IMS) will use **PostgreSQL** as its primary database.
+
+MongoDB was evaluated but rejected because the system requires strong transactional guarantees, relational data modeling, auditability, reporting capabilities, and consistency across incident lifecycle operations.
 
 ---
 
 # Context
 
-The Incident Management System (IMS) stores and manages incidents throughout their lifecycle.
+The Incident Management System manages the complete lifecycle of operational incidents.
 
-An incident creation workflow involves multiple related operations:
+Core entities include:
 
-- Creating the incident record
-- Creating audit trail entries
-- Creating timeline/history events
-- Publishing notification events
-- Recording assignment and ownership information
+* Users
+* Teams
+* Roles
+* Incidents
+* Incident Timelines
+* Audit Logs
+* Escalation Policies
+* Notifications
+* Assignments
 
-These operations must remain consistent and should succeed or fail as a single unit.
+When an incident is created, multiple related operations occur:
+
+```text
+Create Incident
+↓
+Create Timeline Entry
+↓
+Create Audit Record
+↓
+Queue Notifications
+↓
+Trigger Escalation Workflow
+```
+
+These operations must remain consistent and traceable.
 
 The system also requires:
 
-- Complete auditability of all changes
-- Structured incident metadata
-  - severity
-  - status
-  - service
-  - environment
-  - root cause
-- Correlation and deduplication of incidents
-- Efficient querying of recent incidents
-- SLA and operational reporting
-- Future support for partitioning and scaling
-- Strong data integrity guarantees
+* Incident deduplication
+* Similar incident detection
+* Audit history
+* SLA tracking
+* MTTR reporting
+* Escalation reporting
+* Team performance analytics
+* Structured querying
+* Filtering and aggregation
+* Historical incident analysis
 
-The expected data model is highly structured and relationships between entities are important.
-
-Examples include:
-
-- Incident → Reporter
-- Incident → Assignee
-- Incident → Timeline Events
-- Incident → Audit Logs
-- Incident → Services
-- Incident → Escalations
-
-Because incidents represent operational records, correctness and traceability are prioritized over schema flexibility.
-
----
-
-# Decision
-
-We will use PostgreSQL as the primary database for the Incident Management System.
-
-PostgreSQL was selected because it provides:
-
-- ACID transactions
-- Strong consistency guarantees
-- Relational modeling
-- Foreign key constraints
-- Mature indexing capabilities
-- Native partitioning support
-- Advanced reporting and aggregation capabilities
-
-The database will act as the system of record for:
-
-- Incidents
-- Users
-- Assignments
-- Audit Logs
-- Timeline Events
-- Escalations
-- Notification Outbox Events
-
-All incident creation workflows will be executed inside database transactions to ensure consistency.
+Because incidents represent operational events, data correctness is more important than maximum horizontal scalability.
 
 ---
 
 # Alternatives Considered
 
-## Option 1: MongoDB
+## Option 1: PostgreSQL
 
-### Advantages
+### Benefits
 
-- Flexible schema
-- Faster iteration when document structures change frequently
-- Natural storage of nested JSON documents
-- Easier horizontal sharding model
+#### Strong ACID Transactions
 
-### Disadvantages
+Multiple operations can be committed atomically.
 
-- Incident data is highly structured rather than document-oriented
-- Relationships between entities become application-managed
-- Complex reporting often requires aggregation pipelines
-- Maintaining audit consistency across multiple collections is harder
-- Transaction support exists but introduces additional complexity
-- Referential integrity is not enforced by the database
+```text
+Incident
++
+Timeline
++
+Audit Log
++
+Notification Event
+```
 
-### Why Rejected
-
-The primary requirements of IMS are:
-
-- Consistency
-- Auditability
-- Relational integrity
-- Reporting
-
-These align more closely with PostgreSQL than MongoDB.
+Either all succeed or all fail.
 
 ---
 
-## Option 2: PostgreSQL
+#### Relational Modeling
 
-### Advantages
+IMS contains naturally related entities.
 
-- Strong transactional guarantees
-- Referential integrity
-- Rich indexing support
-- Efficient joins
-- Mature analytics capabilities
-- Time-based partitioning support
-- Reliable audit and compliance workflows
+```text
+User
+ └── Incident
+       └── Timeline
+       └── Assignment
+       └── Audit Log
+```
 
-### Disadvantages
-
-- Less schema flexibility
-- Requires migrations when data structures evolve
-- Horizontal scaling is more complex than document databases
-
-### Why Accepted
-
-The operational requirements of IMS favor correctness and traceability over schema flexibility.
-
-PostgreSQL provides stronger guarantees for incident lifecycle management and auditability.
+Foreign keys and constraints enforce integrity.
 
 ---
 
-# Tradeoffs Accepted
+#### Row Locking Support
 
-We accept the following tradeoffs:
+Supports:
 
-1. Schema changes require migrations.
+```sql
+SELECT ... FOR UPDATE
+```
 
-   We prefer explicit schema evolution over unrestricted document structures.
+Useful for:
 
-2. Development velocity may be slightly slower.
+* Incident acknowledgement
+* Escalation ownership
+* Concurrent updates
+* State transitions
 
-   Additional modeling effort is acceptable in exchange for stronger data integrity.
+Prevents race conditions.
 
-3. Horizontal scaling requires additional planning.
+---
 
-   We accept this because expected IMS workloads are primarily transactional and can be scaled using:
+#### Advanced Querying
 
-   - Index optimization
-   - Read replicas
-   - Partitioning
-   - Connection pooling
+Supports:
 
-4. More rigid relational design.
+* Complex joins
+* Aggregations
+* Reporting
+* Window functions
+* Materialized views
 
-   We accept this because incident management data is inherently relational.
+Useful for:
+
+* MTTR calculations
+* SLA reports
+* Incident analytics
+* Escalation metrics
+
+---
+
+#### Mature Indexing
+
+Supports:
+
+* B-Tree
+* GIN
+* GiST
+* Partial Indexes
+* Composite Indexes
+
+Useful for:
+
+* Incident searches
+* Timeline filtering
+* Audit lookups
+* Similar incident detection
+
+---
+
+#### Partitioning
+
+Native partitioning helps manage:
+
+* Large audit tables
+* Incident history
+* Timeline events
+
+without changing application logic.
+
+---
+
+#### Operational Simplicity
+
+Single database.
+
+Lower complexity.
+
+Lower infrastructure cost.
+
+Easier backup, recovery, maintenance and debugging.
+
+---
+
+## Option 2: MongoDB
+
+### Benefits
+
+* Flexible schema
+* Faster iteration for rapidly changing documents
+* Easier document-based modeling
+* Horizontal scaling support
+
+### Drawbacks
+
+#### Weaker Relational Modeling
+
+IMS data is highly relational.
+
+Document duplication would increase complexity.
+
+---
+
+#### Transaction Complexity
+
+Although MongoDB supports transactions, PostgreSQL provides a more mature and battle-tested transactional model for relational workflows.
+
+---
+
+#### Reporting Complexity
+
+Complex reporting and analytics often become harder as relationships grow.
+
+---
+
+#### Data Integrity Risk
+
+Foreign key enforcement and relational constraints are not as natural as PostgreSQL.
+
+---
+
+# Trade-offs Accepted
+
+By choosing PostgreSQL we accept:
+
+* More upfront schema design
+* Schema migrations when models evolve
+* Slightly slower development for rapidly changing document structures
+
+In exchange we gain:
+
+* Strong consistency
+* Transactional safety
+* Auditability
+* Relational integrity
+* Better reporting capabilities
+* Easier incident lifecycle management
+* Simpler operational model
+* Lower infrastructure complexity
 
 ---
 
@@ -173,21 +247,34 @@ We accept the following tradeoffs:
 
 ### Positive
 
-- Strong consistency guarantees
-- Reliable audit trails
-- Easier incident correlation queries
-- Better reporting capabilities
-- Easier enforcement of business rules
-- Reduced risk of data integrity issues
+* Reliable incident lifecycle tracking
+* Strong audit trail guarantees
+* Consistent escalation workflows
+* Easier reporting and analytics
+* Better concurrency control
+* Lower operational complexity
+* Strong foundation for future growth
 
 ### Negative
 
-- More migration management
-- Less flexibility for arbitrary data structures
-- Greater emphasis on schema design
+* Less flexible schema evolution than MongoDB
+* Requires migration management
+* Some horizontal scaling strategies are more complex than document databases
 
 ---
 
-# Summary
+# Rationale
 
-PostgreSQL is selected as the system of record for IMS because incident management is a transactional, audit-heavy, highly relational domain where consistency and traceability are more important than schema flexibility.
+The Incident Management System is a workflow-oriented operational platform rather than a document-centric application.
+
+The primary requirements are:
+
+* Consistency
+* Auditability
+* Transactions
+* Reporting
+* Concurrency control
+
+These requirements align strongly with PostgreSQL's strengths.
+
+Therefore PostgreSQL provides the best balance of reliability, maintainability, operational simplicity, and future scalability for the Incident Management System.
