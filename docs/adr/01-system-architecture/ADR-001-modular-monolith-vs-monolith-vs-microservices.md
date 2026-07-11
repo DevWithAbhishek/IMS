@@ -9,7 +9,7 @@ Accepted
 
 ## Date
 
-2026-06-20
+2026-07-11
 
 ---
 
@@ -43,7 +43,7 @@ The architecture should:
 - Enable rapid feature development
 - Be easy to test and debug
 - Support future scalability
-- Avoid premature optimization
+- Avoid premature optimization 
 
 ---
 
@@ -97,7 +97,8 @@ Characteristics:
 - Single database
 - Clear module boundaries
 - Internal service contracts
-- Domain-oriented structure
+- Domain-oriented structure (Code organized by business domain)
+- Easier testing and better code quality
 
 Example Modules:
 
@@ -116,6 +117,8 @@ Advantages:
 - Easier debugging
 - Easier onboarding
 - Lower infrastructure cost
+- Easier 3rd-party Service / API change
+- Limited blast radius
 - Future service extraction becomes easier
 
 Disadvantages:
@@ -123,6 +126,7 @@ Disadvantages:
 - Entire application deployed together
 - Shared database
 - Limited independent scaling
+- Technology rigidity
 
 ---
 
@@ -148,7 +152,7 @@ Disadvantages:
 - Service discovery required
 - Distributed tracing required
 - Eventual consistency challenges
-- Network failures become a concern
+- Network failures / latency become a concern
 - More difficult local development
 - Higher infrastructure cost
 - Excessive complexity for a single developer
@@ -236,7 +240,9 @@ When:
 
 Potential extractions:
 
+- Incidents Creation Worker
 - Notification Worker
+- Escalation Worker
 - Analytics Worker
 - Reporting Worker
 
