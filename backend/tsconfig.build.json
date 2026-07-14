@@ -1,0 +1,21 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "rootDir": "src", // all source code starts from the src folder.
+    "outDir": "dist", // placeS all compiled JavaScript files into the dist folder.
+    "sourceMap": true, // Enables the generation of sourcemap files, which allow debuggers and other tools to display the original TS source code when actually working with the emitted JS files.
+    "incremental": true, // Tells TS to save information about the project graph from the last compilation to files stored on disk.
+    "removeComments": true
+  },
+  "exclude": [
+    "node_modules",
+    "dist",
+    "src/**/*.test.ts",
+    "src/**/__mocks__",
+    "src/**/__fixtures__",
+    "prisma",
+    "tests",
+    "scripts"
+  ] // Specifies an array of filenames or patterns that should be skipped when resolving include.
+}

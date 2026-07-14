@@ -1,24 +1,19 @@
 {
-    "compilerOptions": {
-        "target": "es2025",
-        "module": "esnext",
-        "moduleResolution": "nodenext",
-        "lib": ["ES2025"],
-        "rootDir": "src",
-        "outDir": "dist",
-        "strict": true,
-        "noUncheckedIndexedAccess": true,
-        "esModuleInterop": true,
-        "forceConsistentCasingInFileNames": true,
-        "skipLibCheck": true,
-        "resolveJsonModule": true,
-        "noImplicitReturns": true,
-        "noFallthroughCasesInSwitch": true,
-        "sourceMap": true,
-        "incremental": true,
-        "tsBuildInfoFile": "dist/.tsbuildinfo",
-        "types": ["node"]
-    },
-    "include": ["src/**/*.ts"],
-    "exclude": ["node_modules", "dist", "**/*.test.ts"]
+  "compilerOptions": {
+    "target": "es2025", // generates JavaScript compatible with the ES2025 standard.
+    "module": "nodenext", // uses Node.js's modern module system (ESM + CommonJS) based on the project setup.
+    "moduleResolution": "nodenext", // Tells TS how to find and resolve imported files the same way modern Node.js does.
+    "lib": ["ES2025"], // Makes ES2025 built-in APIs (like new Array, Promise, etc.) available during compilation.
+    "strict": true, // Enables all strict type-checking rules to catch more bugs at compile time.
+    "noUncheckedIndexedAccess": true, // adds undefined to any un-declared field in the type.
+    "esModuleInterop": true, // imports CommonJS packages (like Express) using modern import syntax.
+    "forceConsistentCasingInFileNames": true, // TS issues an error if a program tries to include a file by a casing different from the casing on disk.
+    "skipLibCheck": true, // Skip type checking of declaration files.
+    "resolveJsonModule": true, // Allows importing modules with a .json extension. This includes generating a type for the import based on the static JSON shape.
+    "noImplicitReturns": true, // TS checks all code paths in a function to ensure they return a value.
+    "noFallthroughCasesInSwitch": true, // Ensures that any non-empty case inside a switch statement includes either break, return, or throw.
+    "tsBuildInfoFile": "dist/.tsbuildinfo", // Specify a file for storing incremental compilation information as a part of composite projects which enables faster building of larger TypeScript codebases.
+    "types": ["node"] //  only packages listed will be included in the global scope for compilation.
+  },
+  "include": ["src/**/*.ts"], // Specifies an array of filenames or patterns to include in the program
 }

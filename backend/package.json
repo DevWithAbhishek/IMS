@@ -5,9 +5,9 @@
   "main": "index.js",
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "dev:worker": "tsx watch src/worker.ts",
+    "start": "node dist/server.js",
     "build": "tsc -p tsconfig.build.json",
-    "start": "node dist/server.ts",
+    "dev:worker": "tsx watch src/worker.ts",
     "start:worker": "node dist/worker.js",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src --ext .ts",
